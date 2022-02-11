@@ -160,7 +160,7 @@ func main() {
 			if len(args) == 0 {
 				printCmdHelp()
 			} else {
-				helpCmd := strings.ToLower(fmt.Sprintf("%s", arg[0]))
+				helpCmd := strings.ToLower(fmt.Sprintf("%s", args[0]))
 				if !commandSet[helpCmd] {
 					fmt.Println("command not found")
 					continue
