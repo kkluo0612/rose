@@ -141,4 +141,94 @@ func main() {
 	for _, cmd := range commandList {
 		commandSet[strings.ToLower(cmd[0])] = true
 	}
+
+	promot := addr + ">"
+	for {
+		cmd, err := line.Prompt(promot)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+		cmd = strings.TrimSpace(cmd)
+		if len(cmd) == 0 {
+			continue
+		}
+		command, args := parseCommandLine(cmd)
+		if command == "quit" {
+			break
+		} else if command == "help" {
+			if len(args) == 0 {
+				printCmdHelp()
+			} else {
+				helpCmd := strings.ToLower(fmt.Sprintf("%s", arg[0]))
+				if !commandSet[helpCmd] {
+					fmt.Println("command not found")
+					continue
+				}
+				for _, perCmd := range commandList {
+					if strings.ToLower(perCmd[0]) == helpCmd {
+						fmt.Println()
+						fmt.Println(" --usage: " + helpCmd + " " + perCmd[1])
+						fmt.Println(" --group: " + perCmd[2] + "\n")
+					}
+				}
+			}
+		} else {
+			line.AppendHistory(cmd)
+			rawResp, err := conn.Do(command, args...)
+			if err != nil {
+				fmt.Printf("(error) %v \n", err)
+				continue
+			}
+			switch reply := rawResp.(type) {
+			case []byte:
+				println(string(reply))
+			case string:
+				println(reply)
+			case nil:
+				println("(nil)")
+			case redis.Error:
+				fmt.Printf("(error) %v \n", reply)
+			case int64:
+				fmt.Printf("(integer) %d \n", reply)
+			case []interface{}:
+				for i, e := range reply {
+					switch element := e.(type) {
+					case string:
+						fmt.Printf("%d) %s\n", i+1, element)
+					case []byte:
+						fmt.Printf("%d) %s\n", i+1, string(element))
+					default:
+						fmt.Printf("%d) %v\n", i+1, element)
+					}
+				}
+			}
+		}
+	}
+}
+
+func printCmdHelp() {
+	help := `
+	Thanks for using RoseDB
+	rosedb-cli
+	To get help about command:
+		Type:"help <command>" for help on command
+	To quit:
+		<ctrl+c> or <quit>`
+	fmt.Println(help)
+}
+
+func parseCommandLine(cmdLine string) (string, []interface{}) {
+	arr := strings.Split(cmdLine, " ")
+	if len(arr) == 0 {
+		return "", nil
+	}
+	args := make([]interface{}, 0)
+	for i := 0; i < len(arr); i++ {
+		if arr[i] == "" {
+			continue
+		}
+		args = append(args, strings.ToLower(arr[i]))
+	}
+	return fmt.Sprintf("%s", args[0]), args[1:]
 }
