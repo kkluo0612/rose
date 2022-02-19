@@ -133,7 +133,7 @@ func (h *Hash) HClear(key string) {
 	delete(h.record, key)
 }
 
-func (h *Hash) exists(key string) bool {
+func (h *Hash) exist(key string) bool {
 	_, exist := h.record[key]
 	return exist
 }
